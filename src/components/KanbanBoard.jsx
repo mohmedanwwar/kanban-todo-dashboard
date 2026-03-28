@@ -12,7 +12,7 @@ import {
   useSensors,
   closestCenter,
 } from "@dnd-kit/core";
-import { Box, Stack } from "@mui/material";
+import { Box } from "@mui/material";
 import KanbanColumn from "./KanbanColumn";
 import TaskCard from "./TaskCard";
 import { useUpdateTask, COLUMNS } from "../hooks/useTasks";

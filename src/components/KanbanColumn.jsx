@@ -20,7 +20,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import TaskCard, { TaskCardSkeleton } from "./TaskCard";
 import useKanbanStore from "../store/useKanbanStore";
-import { useColumnTasks, TASKS_PER_PAGE } from "../hooks/useTasks";
+import { useColumnTasks } from "../hooks/useTasks";
 
 // Column icon map
 const COL_ICONS = {
