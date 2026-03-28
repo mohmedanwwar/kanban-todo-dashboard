@@ -1,0 +1,60 @@
+{
+  "tasks": [
+    {
+      "id": "1",
+      "title": "Design System Setup",
+      "description": "Define color tokens, typography scale, and component library.",
+      "column": "done",
+      "createdAt": "2024-01-01T10:00:00.000Z"
+    },
+    {
+      "id": "2",
+      "title": "Database Schema",
+      "description": "Design ERD and write migration scripts for PostgreSQL.",
+      "column": "done",
+      "createdAt": "2024-01-02T10:00:00.000Z"
+    },
+    {
+      "id": "3",
+      "title": "API Authentication",
+      "description": "Implement JWT access tokens and refresh token rotation.",
+      "column": "review",
+      "createdAt": "2024-01-03T10:00:00.000Z"
+    },
+    {
+      "id": "4",
+      "title": "Dashboard UI",
+      "description": "Build the main Kanban board with drag-and-drop support.",
+      "column": "in_progress",
+      "createdAt": "2024-01-04T10:00:00.000Z"
+    },
+    {
+      "id": "5",
+      "title": "Unit Tests",
+      "description": "Write Jest tests for all API service functions.",
+      "column": "in_progress",
+      "createdAt": "2024-01-05T10:00:00.000Z"
+    },
+    {
+      "id": "6",
+      "title": "Mobile Responsive Layout",
+      "description": "Ensure the board works perfectly on small screens.",
+      "column": "backlog",
+      "createdAt": "2024-01-06T10:00:00.000Z"
+    },
+    {
+      "id": "7",
+      "title": "Dark Mode Support",
+      "description": "Add theme toggle persisted to user preferences.",
+      "column": "backlog",
+      "createdAt": "2024-01-07T10:00:00.000Z"
+    },
+    {
+      "id": "8",
+      "title": "CI/CD Pipeline",
+      "description": "Set up GitHub Actions for lint, test, and deploy steps.",
+      "column": "backlog",
+      "createdAt": "2024-01-08T10:00:00.000Z"
+    }
+  ]
+}
