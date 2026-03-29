@@ -7,7 +7,7 @@
 
 import React from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
-import { Box, Typography, Alert } from "@mui/material";
+import { Box, Alert } from "@mui/material";
 import KanbanColumn from "./KanbanColumn";
 import { useMoveTask } from "../hooks/useTasksQuery";
 import { COLUMNS } from "../utils/columns";

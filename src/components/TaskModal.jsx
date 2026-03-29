@@ -41,7 +41,7 @@ const TaskModal = () => {
   // Populate form when modal opens
   useEffect(() => {
     if (!taskModal) return;
-    if (isEdit) {
+    if (taskModal.mode === "edit") {
       const { title, description, column } = taskModal.task;
       setForm({ title, description, column });
     } else {
