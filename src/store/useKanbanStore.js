@@ -1,34 +1,30 @@
 // src/store/useKanbanStore.js
-// ─────────────────────────────────────────────────────────────────────────────
-// Zustand store holds UI state that is shared across components:
-//   • global search query
-//   • which task dialog is open and in what mode (create / edit)
-// Async server state (tasks list) lives in React Query – not here.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Zustand store for lightweight, synchronous UI state.
+// React Query handles all server/cache state; Zustand manages:
+//  • global search query
+//  • which task is being edited / created
+//  • drag-and-drop in-flight state
+// ─────────────────────────────────────────────────────────────
 
 import { create } from "zustand";
 
 const useKanbanStore = create((set) => ({
-  // ── Search ──────────────────────────────────────────────────────────────────
+  // ── Search ────────────────────────────────────────────────
   searchQuery: "",
   setSearchQuery: (q) => set({ searchQuery: q }),
 
-  // ── Task Dialog ─────────────────────────────────────────────────────────────
-  // mode: "create" | "edit" | null
-  dialogMode: null,
-  // The task being edited (null when creating)
-  editingTask: null,
-  // Pre-selected column when opening the "create" dialog from a column header
-  defaultColumn: "backlog",
+  // ── Task modal ────────────────────────────────────────────
+  // null → closed | { mode:'create', column } | { mode:'edit', task }
+  taskModal: null,
+  openCreateModal: (column) => set({ taskModal: { mode: "create", column } }),
+  openEditModal: (task) => set({ taskModal: { mode: "edit", task } }),
+  closeModal: () => set({ taskModal: null }),
 
-  openCreateDialog: (column = "backlog") =>
-    set({ dialogMode: "create", editingTask: null, defaultColumn: column }),
-
-  openEditDialog: (task) =>
-    set({ dialogMode: "edit", editingTask: task, defaultColumn: task.column }),
-
-  closeDialog: () =>
-    set({ dialogMode: null, editingTask: null }),
+  // ── Delete confirmation ───────────────────────────────────
+  deleteTarget: null, // task id
+  openDeleteConfirm: (id) => set({ deleteTarget: id }),
+  closeDeleteConfirm: () => set({ deleteTarget: null }),
 }));
 
 export default useKanbanStore;

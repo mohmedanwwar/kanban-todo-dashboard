@@ -1,98 +1,64 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// The main board. Wraps all columns in a DndContext so tasks can be dragged
-// between columns. Uses an overlay for the dragging card ghost.
-// ─────────────────────────────────────────────────────────────────────────────
+// src/components/KanbanBoard.jsx
+// ─────────────────────────────────────────────────────────────
+// Root board component.
+// Wraps all columns in a DragDropContext and wires up the
+// onDragEnd handler to call the moveTask mutation.
+// ─────────────────────────────────────────────────────────────
 
-import React, { useState } from "react";
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCenter,
-} from "@dnd-kit/core";
-import { Box } from "@mui/material";
+import React from "react";
+import { DragDropContext } from "@hello-pangea/dnd";
+import { Box, Typography, Alert } from "@mui/material";
 import KanbanColumn from "./KanbanColumn";
-import TaskCard from "./TaskCard";
-import { useUpdateTask, COLUMNS } from "../hooks/useTasks";
-import useKanbanStore from "../store/useKanbanStore";
+import { useMoveTask } from "../hooks/useTasksQuery";
+import { COLUMNS } from "../utils/columns";
 
-export default function KanbanBoard() {
-  const { searchQuery } = useKanbanStore();
-  const updateTask = useUpdateTask();
-  const [activeTask, setActiveTask] = useState(null);
+const KanbanBoard = () => {
+  const moveTask = useMoveTask();
 
-  // Only activate drag after moving 8px – prevents accidental drags on click
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  );
+  /**
+   * Called by @hello-pangea/dnd after a drag ends.
+   * We only care about cross-column drops (destination column ≠ source column).
+   * Same-column reordering is not persisted (stateless pagination).
+   */
+  const onDragEnd = (result) => {
+    const { draggableId, source, destination } = result;
+    if (!destination) return; // dropped outside
+    if (destination.droppableId === source.droppableId) return; // same column
 
-  // ── Drag handlers ──────────────────────────────────────────────────────────
-  const handleDragStart = ({ active }) => {
-    setActiveTask(active.data.current?.task ?? null);
-  };
-
-  const handleDragEnd = ({ active, over }) => {
-    setActiveTask(null);
-    if (!over) return;
-
-    const draggedTask = active.data.current?.task;
-    if (!draggedTask) return;
-
-    // The drop target id is either a column id or another task id (over its column)
-    const targetColumnId = COLUMNS.find((c) => c.id === over.id)
-      ? over.id
-      : over.data?.current?.task?.column;
-
-    if (!targetColumnId || draggedTask.column === targetColumnId) return;
-
-    // Move task to the new column via optimistic update
-    updateTask.mutate({
-      id: draggedTask.id,
-      changes: { column: targetColumnId },
-    });
+    // Optimistic update: fire mutation, React Query invalidates all columns
+    moveTask.mutate({ id: draggableId, column: destination.droppableId });
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      {/* ── Board grid ──────────────────────────────────────────────────────── */}
-      <Box
-        sx={{
-          display: "flex",
-          gap: 2,
-          overflowX: "auto",
-          pb: 2,
-          // Custom scrollbar
-          "&::-webkit-scrollbar": { height: 6 },
-          "&::-webkit-scrollbar-thumb": {
-            background: "rgba(148,163,184,0.2)",
-            borderRadius: 3,
-          },
-        }}
-      >
-        {COLUMNS.map((col) => (
-          <KanbanColumn
-            key={col.id}
-            column={col}
-            searchQuery={searchQuery}
-          />
-        ))}
-      </Box>
+    <Box>
+      {/* Move error banner */}
+      {moveTask.isError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Failed to move task – please try again.
+        </Alert>
+      )}
 
-      {/* ── Drag overlay (the ghost card while dragging) ──────────────────── */}
-      <DragOverlay>
-        {activeTask && (
-          <Box sx={{ transform: "rotate(2deg)", opacity: 0.95 }}>
-            <TaskCard task={activeTask} />
-          </Box>
-        )}
-      </DragOverlay>
-    </DndContext>
+      {/* Scrollable columns row */}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            overflowX: "auto",
+            pb: 2,
+            // Nice scrollbar styling
+            "&::-webkit-scrollbar": { height: 6 },
+            "&::-webkit-scrollbar-track": { borderRadius: 3, bgcolor: "grey.100" },
+            "&::-webkit-scrollbar-thumb": { borderRadius: 3, bgcolor: "grey.400" },
+          }}
+        >
+          {COLUMNS.map((col) => (
+            <KanbanColumn key={col.id} column={col} />
+          ))}
+        </Box>
+      </DragDropContext>
+    </Box>
   );
-}
+};
+
+export default KanbanBoard;

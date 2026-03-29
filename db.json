@@ -1,60 +1,14 @@
 {
   "tasks": [
-    {
-      "id": "1",
-      "title": "Design System Setup",
-      "description": "Define color tokens, typography scale, and component library.",
-      "column": "done",
-      "createdAt": "2024-01-01T10:00:00.000Z"
-    },
-    {
-      "id": "2",
-      "title": "Database Schema",
-      "description": "Design ERD and write migration scripts for PostgreSQL.",
-      "column": "done",
-      "createdAt": "2024-01-02T10:00:00.000Z"
-    },
-    {
-      "id": "3",
-      "title": "API Authentication",
-      "description": "Implement JWT access tokens and refresh token rotation.",
-      "column": "review",
-      "createdAt": "2024-01-03T10:00:00.000Z"
-    },
-    {
-      "id": "4",
-      "title": "Dashboard UI",
-      "description": "Build the main Kanban board with drag-and-drop support.",
-      "column": "in_progress",
-      "createdAt": "2024-01-04T10:00:00.000Z"
-    },
-    {
-      "id": "5",
-      "title": "Unit Tests",
-      "description": "Write Jest tests for all API service functions.",
-      "column": "in_progress",
-      "createdAt": "2024-01-05T10:00:00.000Z"
-    },
-    {
-      "id": "6",
-      "title": "Mobile Responsive Layout",
-      "description": "Ensure the board works perfectly on small screens.",
-      "column": "backlog",
-      "createdAt": "2024-01-06T10:00:00.000Z"
-    },
-    {
-      "id": "7",
-      "title": "Dark Mode Support",
-      "description": "Add theme toggle persisted to user preferences.",
-      "column": "backlog",
-      "createdAt": "2024-01-07T10:00:00.000Z"
-    },
-    {
-      "id": "8",
-      "title": "CI/CD Pipeline",
-      "description": "Set up GitHub Actions for lint, test, and deploy steps.",
-      "column": "backlog",
-      "createdAt": "2024-01-08T10:00:00.000Z"
-    }
+    { "id": 1, "title": "Design homepage", "description": "Include hero section", "column": "backlog", "createdAt": 1700000000000 },
+    { "id": 2, "title": "Set up CI/CD pipeline", "description": "Configure GitHub Actions for automated testing", "column": "backlog", "createdAt": 1700100000000 },
+    { "id": 3, "title": "Write API documentation", "description": "Document all REST endpoints using OpenAPI 3.0", "column": "backlog", "createdAt": 1700200000000 },
+    { "id": 4, "title": "Implement auth middleware", "description": "JWT with refresh token rotation", "column": "in_progress", "createdAt": 1700300000000 },
+    { "id": 5, "title": "Build dashboard layout", "description": "Responsive Kanban board with drag-and-drop support", "column": "in_progress", "createdAt": 1700400000000 },
+    { "id": 6, "title": "Optimise database queries", "description": "Add indexes and rewrite N+1 queries", "column": "in_progress", "createdAt": 1700500000000 },
+    { "id": 7, "title": "Code review – payments module", "description": "Review Stripe integration PR and check edge cases", "column": "review", "createdAt": 1700600000000 },
+    { "id": 8, "title": "Accessibility audit", "description": "Run axe-core and manual screen-reader checks", "column": "review", "createdAt": 1700700000000 },
+    { "id": 9, "title": "Launch landing page", "description": "Go-live checklist complete, DNS propagated", "column": "done", "createdAt": 1700800000000 },
+    { "id": 10, "title": "User interviews – round 1", "description": "5 interviews completed, synthesis written up", "column": "done", "createdAt": 1700900000000 }
   ]
 }

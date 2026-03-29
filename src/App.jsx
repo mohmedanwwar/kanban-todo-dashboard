@@ -1,35 +1,38 @@
 // src/App.jsx
-// ─────────────────────────────────────────────────────────────────────────────
-// Root component. Sets up:
-//   • React Query provider (caching layer)
-//   • MUI dark theme
-//   • App shell: header, search bar, board, dialogs
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Application shell:
+//  • MUI ThemeProvider with custom theme
+//  • React Query client
+//  • Top bar with search
+//  • KanbanBoard
+//  • Global modals (TaskModal, DeleteConfirmDialog)
+// ─────────────────────────────────────────────────────────────
 
 import React from "react";
-import {
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   ThemeProvider,
   createTheme,
   CssBaseline,
+  AppBar,
+  Toolbar,
+  Typography,
   Box,
   Container,
-  Stack,
-  Typography,
   Button,
-  Divider,
+  Chip,
 } from "@mui/material";
+import ViewKanbanOutlinedIcon from "@mui/icons-material/ViewKanbanOutlined";
 import AddIcon from "@mui/icons-material/Add";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
 import KanbanBoard from "./components/KanbanBoard";
+import TaskModal from "./components/TaskModal";
+import DeleteConfirmDialog from "./components/DeleteConfirmDialog";
 import SearchBar from "./components/SearchBar";
-import TaskDialog from "./components/TaskDialog";
 import useKanbanStore from "./store/useKanbanStore";
 
-// ── React Query client config ─────────────────────────────────────────────────
+// ── React Query client ────────────────────────────────────────
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -39,180 +42,127 @@ const queryClient = new QueryClient({
   },
 });
 
-// ── MUI dark theme ────────────────────────────────────────────────────────────
+// ── MUI theme ─────────────────────────────────────────────────
 const theme = createTheme({
   palette: {
-    mode: "dark",
+    mode: "light",
     primary: { main: "#6366f1" },
-    background: {
-      default: "#050c1a",
-      paper: "#0f172a",
-    },
+    secondary: { main: "#f59e0b" },
+    background: { default: "#f8fafc", paper: "#ffffff" },
   },
   typography: {
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: "'Inter', 'Segoe UI', sans-serif",
+    h5: { fontWeight: 800 },
   },
+  shape: { borderRadius: 10 },
   components: {
-    MuiCssBaseline: {
-      styleOverrides: `
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
-        
-        *, *::before, *::after { box-sizing: border-box; }
-        
-        body {
-          background: #050c1a;
-          min-height: 100vh;
-          overflow-x: hidden;
-        }
-        
-        /* Animated background mesh */
-        body::before {
-          content: '';
-          position: fixed;
-          inset: 0;
-          background:
-            radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99,102,241,0.12) 0%, transparent 60%),
-            radial-gradient(ellipse 60% 50% at 80% 90%, rgba(139,92,246,0.08) 0%, transparent 60%),
-            radial-gradient(ellipse 50% 40% at 60% 40%, rgba(52,211,153,0.04) 0%, transparent 60%);
-          pointer-events: none;
-          z-index: 0;
-        }
-        
-        /* Noise grain overlay */
-        body::after {
-          content: '';
-          position: fixed;
-          inset: 0;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-          pointer-events: none;
-          z-index: 0;
-          opacity: 0.4;
-        }
-        
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.15); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.3); }
-      `,
+    MuiButton: {
+      styleOverrides: {
+        root: { textTransform: "none", fontWeight: 600 },
+      },
     },
   },
 });
 
-// ── App Shell ─────────────────────────────────────────────────────────────────
-function AppShell() {
-  const { openCreateDialog } = useKanbanStore();
+// ── Top bar ───────────────────────────────────────────────────
+const TopBar = () => {
+  const openCreateModal = useKanbanStore((s) => s.openCreateModal);
 
   return (
-    <Box sx={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
-      <Container maxWidth="xl" sx={{ py: 3, px: { xs: 2, md: 3 } }}>
-
-        {/* ── Header ───────────────────────────────────────────────────────── */}
-        <Box sx={{ mb: 4 }}>
-          {/* Brand row */}
-          <Stack
-            direction="row"
-            alignItems="flex-start"
-            justifyContent="space-between"
-            flexWrap="wrap"
-            gap={2}
-            sx={{ mb: 2.5 }}
+    <AppBar
+      position="sticky"
+      elevation={0}
+      sx={{
+        bgcolor: "background.paper",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        color: "text.primary",
+      }}
+    >
+      <Toolbar sx={{ gap: 2, minHeight: { xs: 56, sm: 64 } }}>
+        {/* Logo */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <ViewKanbanOutlinedIcon sx={{ color: "primary.main", fontSize: 28 }} />
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 800, fontSize: { xs: "1rem", sm: "1.1rem" }, letterSpacing: -0.5 }}
           >
-            <Box>
-              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5 }}>
-                <Box
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 2,
-                    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "1.1rem",
-                    boxShadow: "0 4px 15px rgba(99,102,241,0.4)",
-                  }}
-                >
-                  📋
-                </Box>
-                <Typography
-                  variant="h4"
-                  sx={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontWeight: 800,
-                    fontSize: { xs: "1.4rem", md: "1.8rem" },
-                    background: "linear-gradient(135deg, #f1f5f9 30%, #a5b4fc 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  KanbanFlow
-                </Typography>
-              </Stack>
-              <Typography
-                sx={{
-                  color: "#475569",
-                  fontSize: "0.8rem",
-                  letterSpacing: "0.05em",
-                  fontWeight: 500,
-                }}
-              >
-                Manage your workflow across every stage
-              </Typography>
-            </Box>
-
-            {/* Add Task CTA */}
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => openCreateDialog("backlog")}
-              sx={{
-                textTransform: "none",
-                fontWeight: 700,
-                fontFamily: "'Syne', sans-serif",
-                borderRadius: 2.5,
-                px: 2.5,
-                py: 1,
-                fontSize: "0.85rem",
-                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                boxShadow: "0 4px 15px rgba(99,102,241,0.35)",
-                "&:hover": {
-                  background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-                  boxShadow: "0 6px 20px rgba(99,102,241,0.5)",
-                  transform: "translateY(-1px)",
-                },
-                transition: "all 0.2s ease",
-              }}
-            >
-              New Task
-            </Button>
-          </Stack>
-
-          <Divider sx={{ borderColor: "rgba(148,163,184,0.08)", mb: 2.5 }} />
-
-          {/* Search */}
-          <SearchBar />
+            KanbanFlow
+          </Typography>
+          <Chip
+            label="beta"
+            size="small"
+            sx={{
+              bgcolor: "primary.main",
+              color: "#fff",
+              height: 18,
+              fontSize: "0.6rem",
+              fontWeight: 700,
+              display: { xs: "none", sm: "flex" },
+            }}
+          />
         </Box>
 
-        {/* ── Board ────────────────────────────────────────────────────────── */}
+        <Box sx={{ flex: 1 }} />
+
+        {/* Search */}
+        <SearchBar />
+
+        {/* New task CTA */}
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<AddIcon />}
+          onClick={() => openCreateModal("backlog")}
+          sx={{ display: { xs: "none", sm: "flex" } }}
+        >
+          New Task
+        </Button>
+      </Toolbar>
+    </AppBar>
+  );
+};
+
+// ── Root ──────────────────────────────────────────────────────
+function AppInner() {
+  return (
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <TopBar />
+
+      <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3 }, pt: 3, pb: 4 }}>
+        {/* Page title */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h5" sx={{ letterSpacing: -0.5, color: "text.primary" }}>
+            Project Board
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            Drag tasks between columns · click{" "}
+            <Box component="span" sx={{ color: "primary.main", fontWeight: 600 }}>
+              +
+            </Box>{" "}
+            to add · search to filter
+          </Typography>
+        </Box>
+
+        {/* Board */}
         <KanbanBoard />
       </Container>
 
-      {/* ── Global Task Dialog ───────────────────────────────────────────── */}
-      <TaskDialog />
+      {/* Global modals */}
+      <TaskModal />
+      <DeleteConfirmDialog />
     </Box>
   );
 }
 
-// ── Root export ───────────────────────────────────────────────────────────────
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AppShell />
+        <AppInner />
       </ThemeProvider>
-      {/* Dev tools only appear in development builds */}
+      {/* Dev tools visible in development only */}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );

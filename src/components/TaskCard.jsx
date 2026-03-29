@@ -1,262 +1,164 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Individual task card. Integrated with @dnd-kit/sortable for drag-and-drop.
-// Supports edit and delete actions.
-// ─────────────────────────────────────────────────────────────────────────────
+// src/components/TaskCard.jsx
+// ─────────────────────────────────────────────────────────────
+// Draggable task card rendered inside each column.
+// Uses @hello-pangea/dnd Draggable wrapper.
+// ─────────────────────────────────────────────────────────────
 
-import React, { useState } from "react";
+import React from "react";
+import { Draggable } from "@hello-pangea/dnd";
 import {
   Card,
   CardContent,
   Typography,
   IconButton,
-  Stack,
-  Chip,
   Tooltip,
-  Skeleton,
   Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
+  Chip,
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import useKanbanStore from "../store/useKanbanStore";
-import { useDeleteTask, COLUMNS } from "../hooks/useTasks";
+import { COLUMN_MAP } from "../utils/columns";
 
-// ── TaskCard ──────────────────────────────────────────────────────────────────
-export default function TaskCard({ task }) {
-  const { openEditDialog } = useKanbanStore();
-  const deleteMutation = useDeleteTask();
-  const [confirmOpen, setConfirmOpen] = useState(false);
+const TaskCard = ({ task, index }) => {
+  const openEditModal = useKanbanStore((s) => s.openEditModal);
+  const openDeleteConfirm = useKanbanStore((s) => s.openDeleteConfirm);
+  const col = COLUMN_MAP[task.column];
 
-  // dnd-kit sortable hook
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id, data: { task } });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-    zIndex: isDragging ? 999 : "auto",
-  };
-
-  const colMeta = COLUMNS.find((c) => c.id === task.column);
-
-  const handleDelete = async () => {
-    await deleteMutation.mutateAsync(task.id);
-    setConfirmOpen(false);
+  // Format relative date
+  const relativeDate = (ts) => {
+    const diff = Date.now() - ts;
+    const days = Math.floor(diff / 86400000);
+    if (days === 0) return "Today";
+    if (days === 1) return "Yesterday";
+    return `${days}d ago`;
   };
 
   return (
-    <>
-      <Card
-        ref={setNodeRef}
-        style={style}
-        elevation={0}
-        sx={{
-          mb: 1.5,
-          borderRadius: 2.5,
-          background: isDragging
-            ? "rgba(99,102,241,0.15)"
-            : "rgba(30,41,59,0.9)",
-          border: "1px solid",
-          borderColor: isDragging
-            ? "rgba(99,102,241,0.6)"
-            : "rgba(148,163,184,0.12)",
-          backdropFilter: "blur(8px)",
-          cursor: "grab",
-          transition: "all 0.2s ease",
-          "&:hover": {
-            borderColor: "rgba(148,163,184,0.3)",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-            transform: "translateY(-1px)",
-          },
-        }}
-      >
-        <CardContent sx={{ p: "12px !important" }}>
-          {/* Drag handle + actions row */}
-          <Stack
-            direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ mb: 0.5 }}
-          >
-            {/* Drag handle */}
-            <Box
-              {...attributes}
-              {...listeners}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                color: "#475569",
-                cursor: "grab",
-                "&:active": { cursor: "grabbing" },
-                "&:hover": { color: "#94a3b8" },
-                mr: 0.5,
-              }}
-            >
-              <DragIndicatorIcon fontSize="small" />
+    <Draggable draggableId={task.id} index={index}>
+      {(provided, snapshot) => (
+        <Card
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          elevation={snapshot.isDragging ? 8 : 1}
+          sx={{
+            mb: 1.5,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: snapshot.isDragging ? col.color : "divider",
+            transition: "box-shadow 0.2s, border-color 0.2s, transform 0.15s",
+            transform: snapshot.isDragging ? "rotate(2deg)" : "none",
+            bgcolor: snapshot.isDragging ? col.lightBg : "background.paper",
+            "&:hover": {
+              borderColor: col.color,
+              "& .action-btns": { opacity: 1 },
+            },
+          }}
+        >
+          <CardContent sx={{ p: "12px 14px !important" }}>
+            {/* Header row: drag handle + title + actions */}
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.5 }}>
+              {/* Drag handle */}
+              <Box
+                {...provided.dragHandleProps}
+                sx={{
+                  color: "text.disabled",
+                  cursor: "grab",
+                  mt: 0.3,
+                  flexShrink: 0,
+                  "&:active": { cursor: "grabbing" },
+                }}
+              >
+                <DragIndicatorIcon fontSize="small" />
+              </Box>
+
+              {/* Title */}
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 600,
+                  flex: 1,
+                  lineHeight: 1.35,
+                  fontSize: "0.85rem",
+                  color: "text.primary",
+                }}
+              >
+                {task.title}
+              </Typography>
+
+              {/* Action buttons – shown on hover */}
+              <Box
+                className="action-btns"
+                sx={{
+                  opacity: 0,
+                  transition: "opacity 0.2s",
+                  display: "flex",
+                  gap: 0.25,
+                  flexShrink: 0,
+                }}
+              >
+                <Tooltip title="Edit task" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={() => openEditModal(task)}
+                    sx={{ p: 0.5, color: "text.secondary" }}
+                  >
+                    <EditOutlinedIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete task" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={() => openDeleteConfirm(task.id)}
+                    sx={{ p: 0.5, color: "error.light" }}
+                  >
+                    <DeleteOutlineIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Box>
 
-            {/* Column chip */}
-            <Chip
-              label={colMeta?.label}
-              size="small"
-              sx={{
-                height: 20,
-                fontSize: "0.65rem",
-                fontWeight: 700,
-                letterSpacing: "0.05em",
-                backgroundColor: `${colMeta?.color}22`,
-                color: colMeta?.color,
-                border: `1px solid ${colMeta?.color}44`,
-                flexGrow: 1,
-                mx: 0.5,
-              }}
-            />
+            {/* Description */}
+            {task.description && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  mt: 0.75,
+                  ml: 3,
+                  fontSize: "0.78rem",
+                  lineHeight: 1.5,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
+                {task.description}
+              </Typography>
+            )}
 
-            {/* Edit & Delete */}
-            <Stack direction="row" spacing={0.25}>
-              <Tooltip title="Edit task">
-                <IconButton
-                  size="small"
-                  onClick={() => openEditDialog(task)}
-                  sx={{ color: "#6366f1", "&:hover": { color: "#818cf8" } }}
-                >
-                  <EditIcon sx={{ fontSize: 15 }} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete task">
-                <IconButton
-                  size="small"
-                  onClick={() => setConfirmOpen(true)}
-                  sx={{ color: "#f43f5e", "&:hover": { color: "#fb7185" } }}
-                >
-                  <DeleteIcon sx={{ fontSize: 15 }} />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          </Stack>
-
-          {/* Title */}
-          <Typography
-            variant="body2"
-            sx={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 600,
-              color: "#f1f5f9",
-              fontSize: "0.85rem",
-              lineHeight: 1.4,
-              mb: 0.5,
-              wordBreak: "break-word",
-            }}
-          >
-            {task.title}
-          </Typography>
-
-          {/* Description */}
-          {task.description && (
-            <Typography
-              variant="caption"
-              sx={{
-                color: "#64748b",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                lineHeight: 1.5,
-                fontSize: "0.75rem",
-              }}
-            >
-              {task.description}
-            </Typography>
-          )}
-
-          {/* Date */}
-          <Typography
-            variant="caption"
-            sx={{ color: "#334155", display: "block", mt: 1, fontSize: "0.68rem" }}
-          >
-            {new Date(task.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
-          </Typography>
-        </CardContent>
-      </Card>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            background: "#1e293b",
-            border: "1px solid rgba(148,163,184,0.15)",
-          },
-        }}
-      >
-        <DialogTitle sx={{ color: "#f1f5f9", fontFamily: "'Syne', sans-serif" }}>
-          Delete Task?
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ color: "#94a3b8" }}>
-            <strong style={{ color: "#f1f5f9" }}>{task.title}</strong> will be
-            permanently removed.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ pb: 2, px: 3, gap: 1 }}>
-          <Button
-            onClick={() => setConfirmOpen(false)}
-            sx={{ color: "#94a3b8", textTransform: "none" }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDelete}
-            variant="contained"
-            color="error"
-            disabled={deleteMutation.isPending}
-            sx={{ textTransform: "none", borderRadius: 2 }}
-          >
-            {deleteMutation.isPending ? "Deleting…" : "Delete"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+            {/* Footer: date chip */}
+            <Box sx={{ mt: 1.25, ml: 3, display: "flex", alignItems: "center", gap: 1 }}>
+              <Chip
+                label={relativeDate(task.createdAt)}
+                size="small"
+                sx={{
+                  height: 18,
+                  fontSize: "0.65rem",
+                  bgcolor: col.lightBg,
+                  color: col.color,
+                  fontWeight: 600,
+                  "& .MuiChip-label": { px: 1 },
+                }}
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      )}
+    </Draggable>
   );
-}
+};
 
-// ── Skeleton placeholder shown while loading ──────────────────────────────────
-export function TaskCardSkeleton() {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        mb: 1.5,
-        borderRadius: 2.5,
-        background: "rgba(30,41,59,0.5)",
-        border: "1px solid rgba(148,163,184,0.08)",
-      }}
-    >
-      <CardContent sx={{ p: "12px !important" }}>
-        <Skeleton variant="text" width="60%" sx={{ bgcolor: "#1e293b", mb: 0.5 }} />
-        <Skeleton variant="text" width="90%" sx={{ bgcolor: "#1e293b" }} />
-        <Skeleton variant="text" width="75%" sx={{ bgcolor: "#1e293b" }} />
-      </CardContent>
-    </Card>
-  );
-}
+export default TaskCard;

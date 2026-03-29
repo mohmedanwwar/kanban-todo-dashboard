@@ -1,74 +1,66 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Debounced search bar connected to Zustand. Filters tasks across all columns.
-// ─────────────────────────────────────────────────────────────────────────────
+// src/components/SearchBar.jsx
+// Global search bar – debounced so we don't hammer the mock API
+// on every keystroke.
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { InputAdornment, TextField, IconButton, Tooltip } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import useKanbanStore from "../store/useKanbanStore";
 
-// Debounce helper
-function useDebounce(value, delay = 350) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return debounced;
+// Simple debounce helper
+function useDebounce(fn, delay) {
+  const timer = React.useRef(null);
+  return useCallback(
+    (...args) => {
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => fn(...args), delay);
+    },
+    [fn, delay]
+  );
 }
 
-export default function SearchBar() {
-  const { setSearchQuery } = useKanbanStore();
+const SearchBar = () => {
+  const setSearchQuery = useKanbanStore((s) => s.setSearchQuery);
   const [localValue, setLocalValue] = useState("");
-  const debounced = useDebounce(localValue, 350);
 
-  // Push debounced value to global store → triggers React Query refetch
-  useEffect(() => {
-    setSearchQuery(debounced);
-  }, [debounced, setSearchQuery]);
+  const debouncedSet = useDebounce(setSearchQuery, 300);
 
-  const handleClear = useCallback(() => {
+  const handleChange = (e) => {
+    setLocalValue(e.target.value);
+    debouncedSet(e.target.value);
+  };
+
+  const handleClear = () => {
     setLocalValue("");
     setSearchQuery("");
-  }, [setSearchQuery]);
+  };
 
   return (
     <TextField
-      placeholder="Search tasks by title or description…"
-      value={localValue}
-      onChange={(e) => setLocalValue(e.target.value)}
       size="small"
-      variant="outlined"
+      placeholder="Search tasks…"
+      value={localValue}
+      onChange={handleChange}
       sx={{
-        width: { xs: "100%", sm: 360 },
+        width: { xs: "100%", sm: 280 },
         "& .MuiOutlinedInput-root": {
-          color: "#f1f5f9",
-          borderRadius: 3,
-          background: "rgba(30,41,59,0.8)",
-          backdropFilter: "blur(8px)",
+          borderRadius: 2,
+          bgcolor: "background.paper",
           fontSize: "0.85rem",
-          "& fieldset": { borderColor: "rgba(148,163,184,0.2)" },
-          "&:hover fieldset": { borderColor: "rgba(148,163,184,0.4)" },
-          "&.Mui-focused fieldset": { borderColor: "#6366f1" },
         },
-        "& .MuiInputAdornment-root": { color: "#64748b" },
       }}
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">
-            <SearchIcon sx={{ fontSize: 18, color: "#64748b" }} />
+            <SearchIcon fontSize="small" sx={{ color: "text.disabled" }} />
           </InputAdornment>
         ),
         endAdornment: localValue ? (
           <InputAdornment position="end">
             <Tooltip title="Clear search">
-              <IconButton
-                size="small"
-                onClick={handleClear}
-                sx={{ color: "#64748b", "&:hover": { color: "#f1f5f9" } }}
-              >
-                <ClearIcon sx={{ fontSize: 16 }} />
+              <IconButton size="small" onClick={handleClear} edge="end">
+                <ClearIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           </InputAdornment>
@@ -76,4 +68,6 @@ export default function SearchBar() {
       }}
     />
   );
-}
+};
+
+export default SearchBar;
